@@ -264,7 +264,7 @@ class _SlidingUpPanelState extends State<SlidingUpPanel>
                   );
                 },
                 child: Container(
-                  height: MediaQuery.of(context).size.height,
+                  height: MediaQuery.of(context).size.height - (_ac.value * (widget.maxHeight - widget.minHeight)+widget.minHeight),
                   width: MediaQuery.of(context).size.width,
                   child: widget.body,
                 ),
