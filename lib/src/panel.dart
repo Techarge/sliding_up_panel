@@ -87,7 +87,7 @@ class SlidingUpPanel extends StatefulWidget {
 
   /// Adds a margin to the bottom of the body container, to allow for spacing
   /// between body and panel if required.
-  final int bottomMargin;
+  final double bottomMargin;
 
   /// Empty space surrounding the sliding panel sheet.
   final EdgeInsetsGeometry? margin;
@@ -256,6 +256,30 @@ class _SlidingUpPanelState extends State<SlidingUpPanel>
 
   @override
   Widget build(BuildContext context) {
+    var bodyHeight = widget.parallaxEnabled ?
+    MediaQuery
+        .of(context)
+        .size
+        .height -
+        widget.bottomMargin
+        - _getParallax()
+        - widget.minHeight
+
+        :
+    MediaQuery
+        .of(context)
+        .size
+        .height -
+        widget.bottomMargin
+        - (_ac.value * (widget.maxHeight - widget.minHeight));
+
+    print(
+        "debug: ${MediaQuery
+            .of(context)
+            .size
+            .height}: ${widget.maxHeight}, "
+            "${widget.minHeight}, ${_ac.value}:$bodyHeight/${widget
+            .bottomMargin}");
     return Stack(
       alignment: widget.slideDirection == SlideDirection.UP
           ? Alignment.bottomCenter
@@ -263,37 +287,47 @@ class _SlidingUpPanelState extends State<SlidingUpPanel>
       children: <Widget>[
         //make the back widget take up the entire back side
         widget.body != null
-            ? AnimatedBuilder(
-          animation: _ac,
-          builder: (context, child) {
-            return Positioned(
-              top: widget.parallaxEnabled ? _getParallax() : 0.0,
-              child: child ?? SizedBox(),
-            );
-          },
-          child: SafeArea(
+            ?
+            AnimatedBuilder(
+              animation: _ac,
+              builder: (context, child) {
+                var bodyHeight = widget.parallaxEnabled ?
+                MediaQuery
+                    .of(context)
+                    .size
+                    .height -
+                    widget.bottomMargin
+                    - _getParallax()
+                    - widget.minHeight
+                    :
+                MediaQuery
+                    .of(context)
+                    .size
+                    .height -
+                    widget.bottomMargin
+                    - (_ac.value * (widget.maxHeight - widget.minHeight));
+                return Positioned(
+                  top: widget.parallaxEnabled ? _getParallax() : 0.0,
+                  height: widget.slideBody ? MediaQuery.of(context).size.height - widget.bottomMargin + _getParallax()
+                      : MediaQuery.of(context).size.height - widget.bottomMargin,
+                  child: child ?? SizedBox(),
+                );
+              },
               child:
+              // SafeArea(
               Container(
-                height:
-                slideBody ? MediaQuery
-                    .of(context)
-                    .size
-                    .height - widget.bottomMargin :
-                slideBody ? MediaQuery
-                    .of(context)
-                    .size
-                    .height - widget.bottomMargin -
-                    (_ac.value * (widget.maxHeight - widget.minHeight) +
-                        widget.minHeight),
-                //height: MediaQuery.of(context).size.height / 2,
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
-                child: widget.body,
-              )),
-        )
-            : Container(),
+                //top:0,
+                height: widget.slideBody ? bodyHeight : MediaQuery .of(context) .size .height - widget.bottomMargin,
+                width: MediaQuery.of(context).size.width,
+                child:
+                  SizedBox(
+                      height: widget.slideBody ? bodyHeight : MediaQuery .of(context) .size .height - widget.bottomMargin,
+
+                  child: widget.body
+                  )
+              ),
+            )
+         : Container(),
 
         //the backdrop to overlay on the body
         !widget.backdropEnabled
@@ -646,8 +680,7 @@ class _SlidingUpPanelState extends State<SlidingUpPanel>
 
   //animate the panel position to the snap point
   //REQUIRES that widget.snapPoint != null
-  Future<void> _animatePanelToSnapPoint(
-      {Duration? duration, Curve curve = Curves.linear}) {
+  Future<void> _animatePanelToSnapPoint({Duration? duration, Curve curve = Curves.linear}) {
     assert(widget.snapPoint != null);
     return _ac.animateTo(widget.snapPoint!, duration: duration, curve: curve);
   }
@@ -736,8 +769,7 @@ class PanelController {
   /// Requires that the SlidingUpPanel snapPoint property is not null
   /// (optional) duration specifies the time for the animation to complete
   /// (optional) curve specifies the easing behavior of the animation.
-  Future<void> animatePanelToSnapPoint(
-      {Duration? duration, Curve curve = Curves.linear}) {
+  Future<void> animatePanelToSnapPoint({Duration? duration, Curve curve = Curves.linear}) {
     assert(isAttached, "PanelController must be attached to a SlidingUpPanel");
     assert(_panelState!.widget.snapPoint != null,
     "SlidingUpPanel snapPoint property must not be null");
